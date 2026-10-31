@@ -1,0 +1,9 @@
+# Implementer no-stub list — one name per line.
+# Dangling [[wikilinks]] to these names are FLAGGED for human disambiguation,
+# never auto-stubbed by run-implementer.sh. Use for ambiguous names where a stub
+# would be wrong (e.g. multiple distinct people share a first name).
+Mort
+# Rudi: likely a typo of existing [[Rudy]] — Louise to confirm + repoint, not stub.
+Rudi
+# Fischoeder: ambiguous among [[Calvin Fischoeder]] / [[Felix Fischoeder]] / a distinct Fischoeder — Louise to disambiguate.
+Fischoeder

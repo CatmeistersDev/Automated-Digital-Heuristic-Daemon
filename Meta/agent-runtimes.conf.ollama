@@ -1,0 +1,37 @@
+# agent-runtimes.conf.ollama — TEMPLATE. Copy to Meta/agent-runtimes.conf to activate:
+#     cp Meta/agent-runtimes.conf.ollama Meta/agent-runtimes.conf
+# Your copy is git-ignored, so your model choices stay yours.
+#
+# Format:
+#   AGENT=ollama         -> ollama_agent.py DEFAULT_MODEL (a Qwen3.6 35B A3B build)
+#   AGENT=ollama:<tag>   -> that Ollama model tag (tag may contain ':' and '/',
+#                           e.g. ollama:gemma4:e4b  or  ollama:qwen3:14b)
+#
+# The harness (Meta/scripts/ollama_agent.py) gives the model file tools so the
+# upstream agent prompts ("read SKILL.md, then use your tools…") work locally.
+
+# --- Core agents (use the capable 35B default) ---
+ADVISOR=ollama
+EXTRACTOR=ollama
+REVIEWER=ollama
+RESEARCHER=ollama
+
+# --- Specialized agents ---
+IMPLEMENTER=ollama
+TASK_ENRICHER=ollama
+MIRROR=ollama
+
+# --- Grooming: routine vault hygiene (digest+archive, stale checks) ---
+# Plain `ollama` = OLLAMA_AGENT_MODEL. A smaller model is tempting here, but the Groomer reads
+# untrusted vault text: only point it at a model that has passed the prompt-injection probe
+# (bench-models.sh). In testing, gemma4:e4b did not -- it obeyed an injected instruction.
+GROOMER=ollama
+
+# --- Fast paths: interactive triage/feedback. Not read by advisor-server.py today (it uses
+# OLLAMA_AGENT_MODEL directly); kept on the main model so wiring them up later can't silently
+# pick a model that failed the injection probe. ---
+ADVISOR_TRIAGE=ollama
+ADVISOR_FEEDBACK=ollama
+
+# Set to 1 only if a local/self-hosted web search is wired for the researcher
+RESEARCHER_WEB_RUNTIME_VERIFIED=0

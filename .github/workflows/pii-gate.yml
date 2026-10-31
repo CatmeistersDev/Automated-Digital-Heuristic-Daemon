@@ -1,0 +1,22 @@
+name: pii-gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # gitleaks scans full history — a purged file must stay purged
+
+      - name: gitleaks (secrets + custom PII rules, full history)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+      - name: repo PII checker (working tree)
+        run: python3 scripts/pii_check.py

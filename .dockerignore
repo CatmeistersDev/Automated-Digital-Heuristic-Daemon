@@ -1,0 +1,8 @@
+# Build context: vendored whisperX + the code baked into the image (/app).
+# Notes/.secrets/audio stay out of the build entirely.
+*
+!whisperX-main
+!constraints.txt
+!Meta/scripts
+!Meta/Agents
+!Meta/agent-runtimes.conf

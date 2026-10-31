@@ -1,0 +1,22 @@
+# constraints.txt — pins for the autoadhd-brain image build.
+#
+# These are the known-good RESOLVED versions from the verified end-to-end rebuild of
+# 2026-07-02 (transcribe + diarize + voiceprint + advisor/bot all validated). The
+# Dockerfile passes this file to every `pip install` via `-c`, so a future rebuild
+# cannot silently drift onto a broken dependency set — if PyPI moves, the build either
+# reproduces this exact set or fails loudly instead of producing a subtly different image.
+#
+# To upgrade deliberately: bump a pin, rebuild, re-run the end-to-end validation
+# (memo -> transcript -> diarization -> speaker-ID -> extraction; advisor; discord bot),
+# then commit the new set here.
+torch==2.8.0+cpu
+torchaudio==2.8.0+cpu
+torchvision==0.23.0+cpu
+whisperx==3.8.6
+pyannote.audio==4.0.7
+transformers==4.57.6
+ctranslate2==4.8.0
+faster-whisper==1.2.1
+numpy==2.4.6
+discord.py==2.7.1
+pymupdf==1.26.4

@@ -1,0 +1,203 @@
+#!/bin/bash
+# build-manifest.sh — deterministic vault index -> Meta/MANIFEST.md. No LLM.
+# A navigable map (counts + by-type note lists + recent activity) for Obsidian & agents.
+set -uo pipefail
+
+# --force bypasses the content-hash cache below and re-parses every note's frontmatter
+# from scratch (use after a bulk edit you don't trust the cache to have seen).
+MANIFEST_FORCE=0
+for arg in "$@"; do
+    case "$arg" in
+        --force) MANIFEST_FORCE=1 ;;
+    esac
+done
+
+VAULT_DIR="${VAULT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$VAULT_DIR"
+git config --global --add safe.directory '*' 2>/dev/null || true
+git config --global user.email "autoadhd@local" 2>/dev/null || true
+git config --global user.name "AutoADHD" 2>/dev/null || true
+
+VAULT_DIR="$VAULT_DIR" MANIFEST_FORCE="$MANIFEST_FORCE" python3 - <<'PY'
+import os, datetime, hashlib, json, tempfile
+vault = os.environ["VAULT_DIR"]
+force = os.environ.get("MANIFEST_FORCE") == "1"
+today = datetime.date.today()
+cutoff = (today - datetime.timedelta(days=7)).isoformat()
+
+# --- incremental content-hash cache (Phase 1 hardening, 2026-07-18) ---
+# Meta/.manifest-hash-cache.json follows the same "state sidecar next to the thing it
+# tracks" convention as Meta/.voice-progress/: {relpath: {"hash": sha256, "fm": {...}}}.
+# hash is SHA256 of the note's full content — an unchanged note means the frontmatter
+# dict we already parsed for it last run is still correct, so we skip re-parsing it
+# (see _note_hash() below for why the hash covers frontmatter too, not just the body).
+# --force (or a corrupt/missing cache file) just starts from an empty cache, which
+# degrades to a full scan — never a wrong/stale result, only a slower one.
+CACHE_PATH = os.path.join(vault, "Meta", ".manifest-hash-cache.json")
+
+def _load_cache():
+    if force:
+        return {}
+    try:
+        with open(CACHE_PATH, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+def _atomic_write_json(path, obj):
+    d = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(prefix=os.path.basename(path) + ".tmp.", dir=d)
+    try:
+        # mkstemp defaults to 0600 -- unreadable to the vault's own later reads whenever
+        # the writing and reading identities differ (a networked mount read by another uid).
+        os.chmod(tmp, 0o644)
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(obj, fh, indent=2, sort_keys=True)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
+
+_cache = _load_cache()
+_new_cache = {}
+_cache_hits = 0
+_cache_misses = 0
+
+def _fm_from_text(t):
+    d = {}
+    if t.startswith("---"):
+        end = t.find("\n---", 3)
+        if end != -1:
+            for line in t[3:end].splitlines():
+                if ":" in line and not line.strip().startswith("-"):
+                    k, v = line.split(":", 1)
+                    d[k.strip()] = v.strip().strip('"').strip("'")
+    return d
+
+def _note_hash(t):
+    # Hash the WHOLE file, not just the body-after-frontmatter: what we cache per note
+    # is the PARSED FRONTMATTER dict (fm() below is the only thing build-manifest.sh
+    # ever reads from a note — it never looks at body text). A body-only hash would let
+    # a frontmatter-only edit (e.g. flipping `status: open` -> `status: done`, which is
+    # exactly what feeds the "open actions" count and the per-Action line in the
+    # manifest) silently keep serving the STALE cached dict forever — a correctness bug,
+    # not just a missed optimization. Hashing the full file means ANY edit invalidates
+    # the entry, which is the only safe behavior for what's actually being cached here.
+    return hashlib.sha256(t.encode("utf-8", "replace")).hexdigest()
+
+def fm(path):
+    global _cache_hits, _cache_misses
+    rel = os.path.relpath(path, vault)
+    try:
+        t = open(path, encoding="utf-8", errors="replace").read()
+    except Exception:
+        return {}
+    h = _note_hash(t)
+    cached = _cache.get(rel)
+    if cached and cached.get("hash") == h:
+        _cache_hits += 1
+        d = cached.get("fm", {})
+    else:
+        _cache_misses += 1
+        d = _fm_from_text(t)
+    _new_cache[rel] = {"hash": h, "fm": d}
+    return d
+
+EMOJI = {"person":"👤","action":"🎯","event":"📅","reflection":"💭","belief":"🪨",
+         "decision":"⚖️","concept":"💡","project":"📁","place":"📍","organization":"🏢","research":"🔬"}
+
+CANON = [("People","People"),("Organizations","Organizations"),("Places","Places"),
+         ("Projects","Projects"),("Events","Events"),("Decisions","Decisions"),("Actions","Actions")]
+
+L = ["---", "type: index", f"updated: {today.isoformat()}", "source: ai-generated", "---", "",
+     f"# 🗂️ Vault Manifest — {today.isoformat()}", "",
+     "*Auto-generated index of the vault. Regenerated by build-manifest.sh.*", ""]
+
+total = 0
+open_actions = 0
+L.append("## Canon")
+for folder, label in CANON:
+    d = os.path.join(vault, "Canon", folder)
+    if not os.path.isdir(d):
+        continue
+    files = sorted(f for f in os.listdir(d) if f.endswith(".md"))
+    if not files:
+        continue
+    total += len(files)
+    L.append(f"\n### {label} ({len(files)})")
+    for f in files:
+        name = f[:-3]
+        meta = fm(os.path.join(d, f))
+        if folder == "Actions":
+            st = meta.get("status", "")
+            if st in ("open", "in-progress"):
+                open_actions += 1
+            extra = f" — *{st}*" if st else ""
+            L.append(f"- [[{name}]]{extra}")
+        else:
+            L.append(f"- [[{name}]]")
+
+# Thinking
+td = os.path.join(vault, "Thinking")
+if os.path.isdir(td):
+    tfiles = []
+    for root, _, files in os.walk(td):
+        for f in files:
+            if f.endswith(".md"):
+                tfiles.append(f[:-3])
+    if tfiles:
+        total += len(tfiles)
+        L.append(f"\n## Thinking ({len(tfiles)})")
+        for n in sorted(tfiles):
+            L.append(f"- [[{n}]]")
+
+# Recent activity (last 7 days, by created/source_date)
+recent = []
+for sub in ("Canon", "Thinking", "Inbox"):
+    base = os.path.join(vault, sub)
+    if not os.path.isdir(base):
+        continue
+    for root, _, files in os.walk(base):
+        for f in files:
+            if not f.endswith(".md"):
+                continue
+            m = fm(os.path.join(root, f))
+            c = m.get("created") or m.get("source_date", "")[:10] or m.get("recorded", "")[:10]
+            if c and c >= cutoff:
+                recent.append((c, EMOJI.get(m.get("type", ""), "📝"), f[:-3]))
+recent.sort(reverse=True)
+if recent:
+    L.append(f"\n## ✨ Recent (last 7 days)")
+    for c, e, n in recent[:20]:
+        L.append(f"- {e} [[{n}]] · {c}")
+
+L.insert(8, f"**{total} notes** · **{open_actions} open actions**\n")
+
+with open(os.path.join(vault, "Meta", "MANIFEST.md"), "w", encoding="utf-8") as fh:
+    fh.write("\n".join(L))
+print(f"Manifest written: {total} notes, {open_actions} open actions, {len(recent)} recent")
+
+try:
+    _atomic_write_json(CACHE_PATH, _new_cache)
+except OSError as e:
+    print(f"(manifest hash cache not saved: {e})")
+print(f"(hash cache: {_cache_hits} unchanged / skipped re-parse, {_cache_misses} re-parsed{' — forced full scan' if force else ''})")
+PY
+
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git add Meta/MANIFEST.md 2>/dev/null || true
+    if git diff --cached --quiet; then
+        echo "(manifest unchanged)"
+    elif cerr="$(git commit -q -m "[Manifest] rebuild $(date +%Y-%m-%d)" 2>&1)"; then
+        echo "committed"
+    else
+        echo "⚠ COMMIT FAILED: $cerr" >&2
+        exit 1
+    fi
+fi

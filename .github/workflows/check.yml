@@ -1,0 +1,17 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pymupdf (enables the PDF-clipping scenario in test-text-note.sh)
+        run: pip install pymupdf
+
+      - name: make check (syntax + compile + shellcheck + frontmatter + behavioral tests)
+        run: make check

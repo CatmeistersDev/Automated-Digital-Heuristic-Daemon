@@ -1,0 +1,95 @@
+.upstream-ref/
+.scratch/
+.secrets/
+*.log
+__pycache__/
+*.pyc
+Meta/agent-activity.jsonl
+# scheduler liveness heartbeat (touched every 60s by the supervisor thread; watched by the
+# host-side deadman-check.sh) — runtime state, never content
+Meta/.scheduler-heartbeat
+Meta/.voice-progress/
+# Extractor chunk-level resume checkpoints — runtime state, never content; deleted on
+# successful memo completion. See Meta/scripts/extract-checkpoint.py.
+Meta/.extract-progress/
+# Manifest incremental-scan cache (per-note content hash -> parsed frontmatter) — derived
+# state, safe to delete/rebuild any time, never content
+Meta/.manifest-hash-cache.json
+# BM25 lexical index over Canon/+Thinking/ (ranked Researcher retrieval) — derived state,
+# safe to delete/rebuild any time, never content. See Meta/scripts/bm25-index.py.
+Meta/.bm25-index.json
+# Rejection-feedback memory for Meta/review-queue/ — runtime state, never content; lives in
+# the VAULT (not the image) so it survives rebuilds. See Meta/scripts/review-rejections.py.
+Meta/.review-rejections.jsonl
+Meta/.review-unblocks.jsonl
+# Stored-vs-live hash tracking for Canon/Thinking notes — runtime state, never content.
+# See Meta/scripts/note-write-state.py.
+Meta/.note-write-state.json
+# Seen-commit-hash memory for mine-commit-decisions.py --queue — runtime state, never
+# content; lives in the VAULT so it survives image rebuilds.
+Meta/.decision-mine-state.json
+# Daily-briefing action-field snapshot (status/priority/due per action) — lets
+# daily-briefing.sh report only what changed since yesterday instead of repeating the same
+# static top-12 list. Runtime state, never content. See Meta/scripts/daily-briefing.sh.
+Meta/.briefing-actions-snapshot.json
+# bench-models.sh scratch runs (per-timestamp agent output + scores) — disposable, never content
+Meta/.bench-models/
+.claude/scheduled_tasks.lock
+# Vendored WhisperX upstream source (build context for the :whisperx image); fetch
+# the WhisperX `main` zip into whisperX-main/whisperX-main/ to rebuild. Not tracked.
+whisperX-main/
+# Voiceprints = biometric voice embeddings (real people's voice data) — never commit them, so a
+# clone always starts with ZERO enrolled voices and nobody inherits anyone else's. The folder
+# itself ships (with only its README) so the path exists and explains itself; note this must be
+# `dir/*` + a negation, because git cannot re-include a file inside a wholly excluded directory.
+# Worked examples of the file format live in docs/examples/voiceprints/ instead.
+Meta/voiceprints/*
+!Meta/voiceprints/README.md
+
+# Audio is large/binary and lives in the Voice working dirs — never commit it
+*.3gp
+*.3GPP
+*.amr
+*.m4a
+*.opus
+*.wav
+*.mp3
+*.aac
+*.ogg
+Inbox/Voice/_drop/
+Inbox/Voice/_processed/
+Inbox/Voice/_redo/
+# Dead-letter queue: quarantined audio + .reason.txt sidecars (runtime state, never content)
+Inbox/Voice/_failed/
+
+# Text-note drop pipeline (process-text-note.sh): _drop is transient (files land here
+# only briefly before being wrapped) and _failed is the DLQ (quarantined originals +
+# .reason.txt sidecars) — mirrors the Voice dirs above. UNLIKE Voice/_processed, Text's
+# _processed/ is intentionally NOT ignored: dropped text/markdown originals are small,
+# versionable content (not binary audio), and process-text-note.sh commits them
+# alongside the wrapper note on purpose.
+Inbox/Text/_drop/
+Inbox/Text/_drop-noextract/
+Inbox/Text/_failed/
+
+.claude/settings.local.json
+# Private custom agents/customizations from the source repo must never land in this public
+# mirror — this repo has no legitimate reason to ever contain this directory, and any porting
+# pass that naively copies Meta/scripts/* wholesale must not pull it in. Backed up by a
+# ci-check.sh guard (see Meta/scripts/ci-check.sh) that fails loudly if one shows up anyway.
+Meta/scripts/custom/
+# Copyright-marked source material used only as a private reference while authoring the demo
+# vault's fictional world. Never committed, never redistributed.
+s09e02*Transcript.md
+# Your activated per-agent model config. Ships as Meta/agent-runtimes.conf.ollama —
+# copy that to this path and edit. Kept out of git so your model choices are yours
+# and a clone never inherits someone else's.
+Meta/agent-runtimes.conf
+
+# Obsidian UI state: which panes and files were open, rewritten every session. The other three
+# .obsidian/ files (app/appearance/core-plugins) are deliberate vault settings and DO ship —
+# this one is just churn, and it records what you were looking at.
+.obsidian/workspace.json
+
+# Stray test/debug transcript, not part of repo content
+s09e02 - The Taking of Funtime One Two Three - Bob's Burgers Transcript.md

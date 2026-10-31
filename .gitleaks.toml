@@ -1,0 +1,38 @@
+# gitleaks config for the AutoADHD public mirror.
+# Default ruleset extended with repo-specific PII rules. The custom rules
+# are generic patterns only — real literals live in the PRIVATE repo's
+# mirror-scan blocklist, which must also pass before any publish.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "autodhd-internal-topology"
+description = "Origin homelab addressing plan (10.10.x.x)"
+regex = '''\b10\.10\.\d{1,3}\.\d{1,3}\b'''
+
+[[rules]]
+id = "autodhd-gps-pair"
+description = "High-precision lat,long coordinate pair"
+regex = '''-?\d{1,3}\.\d{4,}\s*,\s*-?\d{1,3}\.\d{4,}'''
+
+[[rules]]
+id = "autodhd-gps-frontmatter"
+description = "gps: frontmatter with numeric value"
+regex = '''(?m)^\s*gps:\s*[-\d]'''
+
+[[rules]]
+id = "autodhd-credential-in-url"
+description = "user:secret@host URL"
+regex = '''https?://[^/\s:@]+:[^/\s@]{8,}@'''
+
+[allowlist]
+description = "The gate's own definitions"
+paths = [
+    '''scripts/pii_check\.py''',
+    '''\.gitleaks\.toml''',
+    '''\.github/workflows/pii-gate\.yml''',
+    # Synthetic GPS coordinates needed to exercise the GPS-stripping logic —
+    # same exemption scripts/pii_check.py already carries for this file.
+    '''Meta/scripts/tests/test-voice-memo-gps-slug\.sh''',
+]

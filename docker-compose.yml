@@ -1,0 +1,58 @@
+# Reference copy. Point it at your own vault and your own Ollama, then `docker compose up -d --build`.
+# The `build:` key below means compose builds the image from this repo's Dockerfile — the image is
+# not published anywhere, so there is nothing to pull.
+services:
+    autoadhd:
+      build: .
+      image: autoadhd-brain:latest
+      container_name: autoadhd-brain
+      environment:
+        - VAULT_DIR=/vault
+        # Your Ollama endpoint. Anything OpenAI-compatible on /api works.
+        - OLLAMA_HOST=http://ollama:11434
+        # Model family the agents talk to. Any instruct-tuned local model in this class works —
+        # the pipeline was built against Qwen3.6 35B A3B, with Gemma4 26B as the alternate.
+        # NOTE: the variable the code reads is OLLAMA_AGENT_MODEL (ollama_agent.py, advisor-server.py).
+        - OLLAMA_AGENT_MODEL=qwen3.6:35b-a3b
+        # Whoever owns the vault. Notes are written in this person's voice and "Me" resolves to it.
+        - VAULT_OWNER=Louise
+        # Alerts fan out to ntfy, Discord and Telegram — pick any, all, or none. Each channel is
+        # a no-op unless its own config is set. Setup guide per channel: docs/notifications/
+        # ntfy: leave NTFY_URL empty to disable push entirely.
+        - NTFY_URL=
+        - NTFY_TOPIC=autoadhd
+        # Telegram: token from @BotFather, chat ID via getUpdates (docs/notifications/telegram.md).
+        # Both must be set or the channel stays off.
+        - TELEGRAM_BOT_TOKEN=
+        - TELEGRAM_CHAT_ID=
+        - WHISPER_MODEL=large-v3
+        - WHISPER_DEVICE=cpu
+        - WHISPER_LANG=en
+        # Discord bot: the ONLY user ID allowed to talk to it. Access fails CLOSED — leave this
+        # empty and the bot ignores everyone (and says so on startup). Set it to your own user ID.
+        - DISCORD_ALLOWED_USER_ID=
+        # Deliberate opt-out of the allowlist: DISCORD_ALLOW_ANYONE=1 lets ANY Discord user drive
+        # the bot, which exposes full vault read via the Advisor plus /done writes. Left unset.
+        # - DISCORD_ALLOW_ANYONE=1
+        # Where the Advisor chat endpoint binds. 127.0.0.1 keeps it loopback-only.
+        - ADVISOR_HOST=0.0.0.0
+        # REQUIRED before this will start: the Advisor (Open WebUI chat endpoint, :8723) is
+        # published to the host and refuses to bind without a token — set any random string
+        # here (e.g. `openssl rand -hex 32`) and use the SAME value as Open WebUI's connection
+        # API key. Only skip this if you run Open WebUI co-located and set ADVISOR_HOST=127.0.0.1
+        # instead (loopback-only, no token needed).
+        - ADVISOR_TOKEN=
+      volumes:
+        # This repo doubles as a working vault, so the default mounts it in place. Swap the left
+        # side for your own vault path to run against real notes.
+        - ".:/vault"
+        # Model weights (~5GB of Whisper/pyannote). A named volume so they survive a rebuild;
+        # regenerated on first run if you drop it.
+        - autoadhd-cache:/root/.cache
+      ports:
+        - "8723:8723"
+      restart: unless-stopped
+
+volumes:
+  autoadhd-cache:
+    driver: local

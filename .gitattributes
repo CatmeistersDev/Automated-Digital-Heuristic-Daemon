@@ -1,0 +1,24 @@
+# Force LF on all scripts so they run correctly inside the Linux container.
+# Without this, editing on Windows reintroduces CRLF and bash breaks with
+# "$'\r': command not found".
+*.sh   text eol=lf
+*.py   text eol=lf
+*.conf text eol=lf
+*.ollama text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
+
+# Also force LF on tracked text/docs/fixtures. These aren't executed by bash so a CRLF
+# flip doesn't crash anything the way a script would, but it does turn into 100%-noise
+# diffs across every line whenever something on the Windows side (an editor, Obsidian,
+# a Windows git client with core.autocrlf=true) touches the file — confirmed live
+# 2026-07-15 on .gitignore and 4 test fixtures (verified `git diff --ignore-cr-at-eol`
+# was empty: zero real content change, pure line-ending churn).
+*.md   text eol=lf
+*.txt  text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# JSON is data the container reads; keep it LF so a Windows editor cannot flip it.
+*.json text eol=lf

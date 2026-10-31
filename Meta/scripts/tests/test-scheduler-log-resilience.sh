@@ -39,7 +39,10 @@ check("normal record reaches the log file", "before-stale" in open(log_path, enc
 
 # Simulate the exact failure: shouldRollover()'s stream.seek() raising ESTALE, as it did live
 class _StaleStream:
+    # Both seek() and tell(): Python <=3.13's shouldRollover() seeks, 3.14+ calls tell().
     def seek(self, *a):
+        raise OSError(errno.ESTALE, "Stale file handle")
+    def tell(self):
         raise OSError(errno.ESTALE, "Stale file handle")
     def write(self, *a):
         raise OSError(errno.ESTALE, "Stale file handle")
@@ -68,6 +71,8 @@ check("logging continues normally after recovery",
 # NOT crash the caller either.
 class _OtherFailStream:
     def seek(self, *a):
+        raise OSError(errno.EACCES, "Permission denied")
+    def tell(self):
         raise OSError(errno.EACCES, "Permission denied")
     def close(self):
         pass

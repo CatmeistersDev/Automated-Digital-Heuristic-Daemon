@@ -10,7 +10,7 @@ status: active
 # Engineering Working Agreement (LOCAL)
 
 How code and automation changes are made in this vault. Adapted from upstream for our
-**local Ollama / Unraid** build. Goal: good changes in small steps, verified fast, no lost work.
+**local Ollama / Docker** build. Goal: good changes in small steps, verified fast, no lost work.
 
 ## Principles
 1. **Small batches.** Focused commits over broad mixed changes.

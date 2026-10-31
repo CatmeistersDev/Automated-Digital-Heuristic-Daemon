@@ -29,7 +29,7 @@ This is a **cloud-free re-implementation** of the excellent [**AutoADHD** by Usm
 | Transcription | Whisper (Apple Silicon) | **WhisperX large-v3** + pyannote diarization + voiceprint speaker-ID |
 | Scheduling | macOS `launchd` | **`scheduler.py`** watcher — per-job timeouts, and mutating jobs serialized behind a vault lock |
 | Interfaces | Telegram + Cowork + MCP | **Discord bot + Open WebUI chat + ntfy** pushes |
-| Host | macOS workstation | **Docker on Unraid** (any Docker host works) |
+| Host | macOS workstation | **Any Docker host** (NAS, mini PC, home server) |
 | Email sending | Gmail SMTP | **Draft-only, never sends.** The robot does not get your email password. |
 
 ## The pipeline (a thought's journey)
@@ -75,32 +75,30 @@ Full specs in [`Meta/Agents/`](Meta/Agents/), blueprint in [`Meta/Architecture.m
 
 ## Quickstart
 
-The dopamine-friendly version — four steps, visible progress at each one:
+The dopamine-friendly version — three steps, visible progress at each one:
 
 ```bash
 # 1. Clone (you've already done the hard part: starting)
 git clone https://github.com/CatmeistersDev/Automated-Digital-Heuristic-Daemon && cd Automated-Digital-Heuristic-Daemon
 
-# 2. Vendor WhisperX (build context; it's git-ignored on purpose)
-#    Download the WhisperX `main` zip and extract so this path exists:
-#    whisperX-main/whisperX-main/pyproject.toml
+# 2. Answer a few questions (Enter accepts the default; safe to re-run any time)
+./setup.sh
 
-# 3. Secrets — each one is a single line in a git-ignored file
-mkdir -p .secrets
-echo "hf_xxxxxxxx"  > .secrets/hf-token.txt        # Hugging Face (pyannote diarization)
-echo "your-token"   > .secrets/discord-token.txt    # Discord bot (optional but fun)
-echo "123456789"    > .secrets/discord-channel-id.txt
-
-# 4. Point it at your Ollama and go
-cp Meta/agent-runtimes.conf.ollama Meta/agent-runtimes.conf   # per-agent model picks; edit to taste
+# 3. Go
 docker compose up -d --build
 ```
 
-Then run `make check` (syntax + shellcheck + frontmatter gate), `make install-hooks` (git hook that blocks accidental deletions under `Canon/` — not installed automatically by `git clone`, this is the one manual step), and `make health`. Full operator guide with every knob: [`SYSTEM.md`](SYSTEM.md).
+`setup.sh` asks for your name, timezone, Ollama address and model, a Hugging Face token (for
+speaker labels) and any notification channels you want, then writes them to `.env` and
+`.secrets/` — both git-ignored. It also downloads WhisperX into the build folder, generates
+the Advisor token for Open WebUI, and copies the per-agent model template. Prefer doing it by
+hand? Every value is a `${...}` in [`docker-compose.yml`](docker-compose.yml); put them in `.env`.
+
+Then run `make check` (syntax + shellcheck + frontmatter gate) and `make health`. (`setup.sh` offers to install the git hook that blocks accidental deletions under `Canon/`; `make install-hooks` does the same.) Full operator guide with every knob: [`SYSTEM.md`](SYSTEM.md).
 
 ## Configuration
 
-Everything is env vars in [`docker-compose.yml`](docker-compose.yml) — any hostnames or addresses in the docs are **placeholders**, swap in your own:
+Everything is env vars in [`docker-compose.yml`](docker-compose.yml), filled from `.env` (which `./setup.sh` writes) — any hostnames or addresses in the docs are **placeholders**, swap in your own:
 
 | Var | What | Default-ish |
 |---|---|---|
@@ -109,6 +107,8 @@ Everything is env vars in [`docker-compose.yml`](docker-compose.yml) — any hos
 | `NTFY_URL` / `NTFY_TOPIC` | ntfy push alerts | empty (disabled) / `autoadhd` |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Telegram alerts; both required or the channel stays off | empty (disabled) |
 | `VAULT_OWNER` | your name (agents address you) | — |
+| `TZ` | your timezone — schedules and memo dates use local time | `UTC` |
+| `VAULT_PATH` | host folder mounted as the vault | `.` (this repo's demo vault) |
 | `WHISPER_MODEL` | transcription size | `large-v3` |
 | `DISCORD_ALLOWED_USER_ID` | who may talk to the bot — access fails **closed**, so leaving it empty means the bot ignores everyone | empty |
 | `DISCORD_ALLOW_ANYONE` | set to `1` to let **any** Discord user drive the bot (full vault read via the Advisor, plus `/done` writes). Leave unset. | unset |
@@ -149,7 +149,7 @@ Voice capture from Android is included as a Tasker profile ([`Tasker_Capture_v2.
 - [x] Reproducible builds (`constraints.txt` pinning)
 - [x] iOS Shortcut capture recipe
 - [x] CI workflow running `make check` on push
-- [ ] Setup wizard so step 3 above becomes step "press enter"
+- [x] Setup wizard (`./setup.sh`) so setup is mostly "press enter"
 - [ ] More capture paths (email-in)
 
 ## Credits & license

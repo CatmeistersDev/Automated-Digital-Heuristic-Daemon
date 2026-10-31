@@ -1,4 +1,4 @@
-# Dockerfile for AutoADHD on Linux/Unraid/Windows — WhisperX (CPU) + diarization + Discord.
+# Dockerfile for AutoADHD on any Docker host (Linux/Windows/macOS) — WhisperX (CPU) + diarization + Discord.
 #
 # History: an earlier revision of this file never built — it passed per-package
 # `--hash=` on the pip *command line* (only valid inside a requirements file),

@@ -346,7 +346,7 @@ def schedule_jobs():
     schedule.every(1).hours.do(run_script, "run-health.sh", mutating=False, timeout=300)   # hourly watchdog: read-only, never starved
     schedule.every().day.at("21:30").do(run_script, "run-reviewer.sh")         # daily QA pass over recent extractions
     schedule.every().day.at("21:45").do(run_script, "run-implementer.sh")      # daily self-heal: auto-fix safe Reviewer findings, flag the rest
-    schedule.every().day.at("03:15").do(run_script, "run-backup.sh", mutating=False, timeout=900)  # daily git-bundle backup (off-array), read-only
+    schedule.every().day.at("03:15").do(run_script, "run-backup.sh", mutating=False, timeout=900)  # daily git-bundle backup (separate disk), read-only
     schedule.every().day.at("09:15").do(run_script, "run-decision-mining.sh", timeout=600)  # monthly (self-gates to the 1st): mine git log for decision candidates -> review-queue (propose-only)
     schedule.every().sunday.at("12:00").do(run_script, "run-ci-check.sh", mutating=False, timeout=600)  # weekly code/frontmatter sanity gate, read-only, self-alerts on failure
     logging.info("Schedules: briefing 07:30, enricher 08:30, researcher-scan 08:45, decision-mining 09:15 (1st of month), orchestrator 10:00, retro 21:00, reviewer 21:30, implementer 21:45, thinker+mirror Sun 10:00/10:30, groomer Sun 11:00, dedup Sun 11:30, ci-check Sun 12:00, extractor catch-up every 2h, health hourly, backup 03:15; voice + text watchers active.")

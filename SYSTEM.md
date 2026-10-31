@@ -102,8 +102,8 @@ are **placeholders** — substitute your own. Everything is env vars in `docker-
   `Canon/_stubs/` (skips pronouns/roles/version-junk + any name in `Meta/implementer-no-stub.txt`);
   flags the rest to `Meta/review-queue/`. Never edits content, merges, or deletes.
 - `run-health.sh` — watchdog (stuck memos/dead services) + ntfy alert. `build-manifest.sh` — Meta/MANIFEST.md index.
-- `deadman-check.sh` — **HOST-side** dead-man's switch (2026-07-09): runs on the Unraid host
-  (User Scripts / cron, every 15 min — NOT inside the container it watches), alerts via
+- `deadman-check.sh` — **HOST-side** dead-man's switch (2026-07-09): runs on the Docker host
+  (cron / your NAS's task scheduler, every 15 min — NOT inside the container it watches), alerts via
   ntfy+Discord when the container is down or `Meta/.scheduler-heartbeat` (touched every 60s
   by scheduler.py's supervisor thread) goes stale >10 min. Covers the one failure mode the
   in-container health watchdog can't: total silence. Install AFTER deploying the new scheduler.py.

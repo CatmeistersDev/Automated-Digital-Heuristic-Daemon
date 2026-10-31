@@ -239,7 +239,7 @@ def main():
         if not allowed(interaction.user.id):
             return
         # defer: mark_action_done runs two git subprocesses (up to 30s) — over the 3s
-        # initial-response window on a slow array, and it must not block the loop.
+        # initial-response window on slow storage, and it must not block the loop.
         await interaction.response.defer()
         await interaction.followup.send(await asyncio.to_thread(mark_action_done, action))
 

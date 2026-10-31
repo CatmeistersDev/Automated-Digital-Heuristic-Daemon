@@ -16,7 +16,7 @@ source_agent: Claude
 ## 1. One-line model
 
 Voice memo → transcript → structured Obsidian knowledge (Canon), maintained by a fleet of scheduled
-local-LLM + deterministic agents, all git-tracked, 100% on-box (a single Unraid-style NAS host).
+local-LLM + deterministic agents, all git-tracked, 100% on-box (a single Docker host: NAS, mini PC, server).
 
 ## 2. The four zones (data model)
 

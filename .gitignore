@@ -93,3 +93,6 @@ Meta/agent-runtimes.conf
 
 # Stray test/debug transcript, not part of repo content
 s09e02 - The Taking of Funtime One Two Three - Bob's Burgers Transcript.md
+
+# setup.sh output: your settings (tokens included). Never commit.
+.env

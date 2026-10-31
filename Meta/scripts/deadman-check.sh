@@ -1,10 +1,10 @@
 #!/bin/bash
-# deadman-check.sh — HOST-side (Unraid) dead-man's switch for the autoadhd-brain container.
+# deadman-check.sh — HOST-side dead-man's switch for the autoadhd-brain container.
 #
 # WHY: every in-container alert (run-health.sh, notify fan-out) is scheduled by the very
 # scheduler it watches — a dead container or wedged scheduler means TOTAL SILENCE, which is
 # the one failure mode the stack couldn't see. This script runs OUTSIDE the container on the
-# Unraid host and alerts when:
+# Docker host and alerts when:
 #   1) the container isn't running, or
 #   2) the scheduler heartbeat (Meta/.scheduler-heartbeat, touched every 60s by a dedicated
 #      supervisor thread in scheduler.py — NOT the job-running main loop, so a legitimate
@@ -13,9 +13,9 @@
 # Alerts go to ntfy AND Discord directly with curl (no python needed on the host), throttled
 # to one alert per THROTTLE_MIN so a dead container doesn't ping every 15 minutes all night.
 #
-# INSTALL (one-time, on the Unraid host — this cannot run inside the container it watches):
-#   User Scripts plugin -> Add Script -> paste this file -> schedule: Custom "*/15 * * * *"
-#   (or root crontab:  */15 * * * * bash "/path/to/your/vault/Meta/scripts/deadman-check.sh")
+# INSTALL (one-time, on the Docker host — this cannot run inside the container it watches):
+#   root crontab:  */15 * * * * bash "/path/to/this/repo/Meta/scripts/deadman-check.sh"
+#   (on a NAS, use its task scheduler / user-scripts feature with the same 15-minute schedule)
 # NOTE: deploy the updated scheduler.py (which writes the heartbeat) BEFORE installing this,
 # or it will alert immediately on the missing heartbeat file.
 set -u
@@ -55,7 +55,7 @@ fi
 touch "$STATE"
 
 TITLE="🛑 AutoADHD DEAD-MAN ALERT"
-BODY="$fail (checked from the Unraid host at $(date '+%Y-%m-%d %H:%M'))"
+BODY="$fail (checked from the Docker host at $(date '+%Y-%m-%d %H:%M'))"
 
 # ntfy (host-reachable; may share fate with the box but not with the container)
 curl -sf -m 8 -H "Title: $TITLE" -H "Priority: urgent" -H "Tags: skull,rotating_light" -d "$BODY" \

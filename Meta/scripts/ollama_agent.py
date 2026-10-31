@@ -107,7 +107,7 @@ def _resolve(path):
     # `.secrets/` lives INSIDE the vault, so the escape check above doesn't cover it.
     # Deny every tool (read/write/list/grep) access to it: a prompt-injected transcript
     # or a read-only Advisor call must never be able to read the Discord/HF tokens or the
-    # plaintext Unraid ssh credentials, nor write into that directory.
+    # plaintext host ssh credentials, nor write into that directory.
     secrets_dir = os.path.join(vault_real, ".secrets")
     if full == secrets_dir or full.startswith(secrets_dir + os.sep):
         raise ValueError("path is in the protected .secrets/ directory")

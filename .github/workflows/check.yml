@@ -10,8 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: pymupdf (enables the PDF-clipping scenario in test-text-note.sh)
-        run: pip install pymupdf
+      - name: Python deps the tests import (pymupdf for the PDF scenario; schedule + watchdog for scheduler.py)
+        run: pip install pymupdf schedule==1.2.2 watchdog==6.0.0
 
       - name: make check (syntax + compile + shellcheck + frontmatter + behavioral tests)
         run: make check

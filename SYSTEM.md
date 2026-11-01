@@ -46,7 +46,7 @@ are **placeholders** — substitute your own. Everything is env vars in `docker-
 - **ntfy** server: its own container, reachable at `NTFY_URL`, topic `autoadhd`.
 - **Open WebUI** (host network): connect to the Advisor at `http://localhost:8723/v1` (model
   `autoadhd-advisor`).
-- **Capture:** Android (Tasker, GPS in filename) → Syncthing → `Inbox/Voice/_drop`.
+- **Capture:** Android (Fossify Voice Recorder; the older Tasker profile, which puts GPS in the filename, still works) → Syncthing → `Inbox/Voice/_drop`.
 
 ## Agents / scripts (Meta/scripts/)
 - `ollama_agent.py` — the tool harness (engine). `invoke-agent.sh` — chokepoint router (default runtime=ollama).

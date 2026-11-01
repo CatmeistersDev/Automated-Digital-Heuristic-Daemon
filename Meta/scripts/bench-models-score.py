@@ -7,8 +7,8 @@ every (model, task) pair, to score the results and print the final table.
 Usage: bench-models-score.py <fixture_vault_dir> <out_dir>
 
 Walks <out_dir>/<model>/<task>/{agent.log,elapsed_seconds.txt} (written by
-bench-models.sh), scores each task against tests/fixtures/vault/'s own Canon/ tree
-(the ground truth), prints one row per model, and writes <out_dir>/results.json with
+bench-models.sh), scores each task against the demo vault's own Canon/ tree (exported
+from git HEAD — the ground truth), prints one row per model, and writes <out_dir>/results.json with
 full detail.
 """
 import glob
@@ -18,7 +18,7 @@ import re
 import sys
 
 # Task keys double as run-directory names, so they stay short and shell-safe. Each maps
-# to its fixture note's real basename under tests/fixtures/vault/Inbox/Voice/, which
+# to its fixture note's real basename under the demo vault's Inbox/Voice/, which
 # follows the live-vault naming process-voice-memo.sh writes: "<date> - Voice - <slug>".
 EXTRACT_FIXTURES = {
     "memo-02.30": "2026-06-03 - Voice - 6-3-26-02.30",

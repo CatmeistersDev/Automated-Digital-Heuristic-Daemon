@@ -6,11 +6,13 @@
 # rules, the guardrail against fabricating a Person note for an unnamed role,
 # resistance to an instruction injected inside transcript text) — not a generic LLM
 # leaderboard. Uses the SAME prompt shape as run-extractor.sh's build_prompt(), run
-# through the real ollama_agent.py harness, against tests/fixtures/vault/'s three
-# known-answer transcripts (the 2026-06-03 voice memos) plus one synthetic adversarial one.
+# through the real ollama_agent.py harness, against the demo vault's three known-answer
+# transcripts (the 2026-06-03 voice memos) plus one synthetic adversarial one.
 #
-# Nothing here touches the real vault or the fixtures — every run gets its own
-# disposable scratch dir under Meta/.bench-models/<timestamp>/ (gitignored).
+# The answer key is the demo vault AS LAST COMMITTED (Canon/, Inbox/, Thinking/ exported
+# from git HEAD), so running the system against this repo doesn't shift the scores.
+# Nothing here touches the real vault — every run gets its own disposable scratch dir
+# under Meta/.bench-models/<timestamp>/ (gitignored).
 #
 # CROSS-HOST: a candidate may be "model" (uses $OLLAMA_HOST) or "model@http://host:port"
 # to hit a different endpoint per model. Works against both native-Ollama hosts (bare
@@ -29,9 +31,11 @@
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VAULT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-FIXTURE_VAULT="$VAULT_ROOT/tests/fixtures/vault"
 OUT_DIR="$VAULT_ROOT/Meta/.bench-models/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$OUT_DIR"
+FIXTURE_VAULT="$OUT_DIR/demo-vault"
+mkdir -p "$FIXTURE_VAULT"
+git -C "$VAULT_ROOT" archive HEAD Canon Inbox Thinking | tar -x -C "$FIXTURE_VAULT"     || { echo "FATAL: could not export the demo vault from git HEAD" >&2; exit 1; }
 OLLAMA_HOST="${OLLAMA_HOST:-http://ollama:11434}"
 
 # Resolve a python that actually runs (same trick invoke-agent.sh uses — Windows'

@@ -130,7 +130,9 @@ else in the system changes based on which you choose.
 Failed sends never disappear silently: `notify.sh` can't alert about its own failure, so it appends
 to `Meta/notify-errors.log` and `make health` surfaces recent entries.
 
-Voice capture from Android is included as a Tasker profile ([`Tasker_Capture_v2.tsk.xml`](Tasker_Capture_v2.tsk.xml)) → Syncthing → the watcher.
+**Android:** record with [Fossify Voice Recorder](https://github.com/FossifyOrg/Voice-Recorder) (free, open source, no setup beyond picking a save folder). Point its save folder at a Syncthing-shared folder that syncs to `Inbox/Voice/_drop/` on the vault host, and the watcher picks each memo up as it lands. Its m4a/mp3/ogg output is all accepted.
+
+*Older option:* the Tasker profile ([`Tasker_Capture_v2.tsk.xml`](Tasker_Capture_v2.tsk.xml)) still works if you'd rather use Tasker. It was the original capture route and also writes GPS into the filename. It still goes through Syncthing → the watcher.
 
 **iPhone:** build a Shortcut (ported from upstream `uetzel/AutoADHD`'s recipe) — **Record Audio** → **Get Current Location** → **Text**: `loc_[Latitude]_[Longitude]_[Current Date]` → **Save File**: File = Recording, Destination = `Inbox/Voice/_drop/`, Subpath = `[Text].m4a`. Turn off "Ask Where to Save," add the Shortcut to your home screen. Drop the file into `Inbox/Voice/_drop/` via iCloud sync or `scp`/sshfs to the vault host — anything that lands a file there works, since `scheduler.py`'s watcher (`VOICE_DROP_DIR`) picks it up the moment it appears, no manual trigger needed.
 

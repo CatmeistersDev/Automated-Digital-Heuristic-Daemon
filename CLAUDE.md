@@ -10,7 +10,7 @@ Git tracks every change. If something goes wrong, we revert.
 This vault runs **100% locally** on any Docker host — no Anthropic/Claude CLI, no Codex, no
 cloud. Owner is **Louise**. Operator/deploy guide: `SYSTEM.md`; system blueprint: `Meta/Architecture.md`.
 
-- **CODE/DATA SPLIT (2026-07-09):** THIS repo is the CODE repo; the owner's personal vault lives ONLY on the data volume/container `/vault` (its own git repo). Code ships BAKED into the Docker image at `/app` — deploy = image rebuild + recreate (see `SYSTEM.md`), never by editing the live mount. Scripts self-locate (`dirname $0`/`__file__`); `VAULT_DIR` is data-only. A self-hosted git remote holds private `-code` + `-vault` repos; `run-backup.sh` pushes the vault replica nightly. Sample notes for tests: `tests/fixtures/vault/`.
+- **CODE/DATA SPLIT (2026-07-09):** THIS repo is the CODE repo; the owner's personal vault lives ONLY on the data volume/container `/vault` (its own git repo). Code ships BAKED into the Docker image at `/app` — deploy = image rebuild + recreate (see `SYSTEM.md`), never by editing the live mount. Scripts self-locate (`dirname $0`/`__file__`); `VAULT_DIR` is data-only. A self-hosted git remote holds private `-code` + `-vault` repos; `run-backup.sh` pushes the vault replica nightly. Sample notes: the Bob's Burgers demo vault in this repo's own `Canon/`/`Inbox/`/`Thinking/`.
 - **Runtime:** agents run via `Meta/scripts/invoke-agent.sh` → `ollama_agent.py` (a local tool-using
   harness) against **Ollama** (`http://ollama:11434`, a model from the
   **Qwen3.6 35B A3B** family). Tools: read/write/grep/bash/git.
